@@ -13,79 +13,136 @@ from bot import constants
 from bot.bot import Bot
 from bot.log import get_logger, setup_sentry
 
-setup_sentry()
-LOCALHOST = "127.0.0.1"
+load_dotenv()
+token = os.getenv(MTE4NzI5MTEzMTQ4NzE5MTA3MQ.GfE5JJ.IAKQxZ79iiLX7v8GGVbyFOvaS2kHk22d0kazw4)
+name = 'FuzzysaurusRex#0069'
 
+chance = 1
 
-async def _create_redis_session() -> RedisSession:
-    """Create and connect to a redis session."""
-    redis_session = RedisSession(
-        host=constants.Redis.host,
-        port=constants.Redis.port,
-        password=constants.Redis.password,
-        max_connections=20,
-        use_fakeredis=constants.Redis.use_fakeredis,
-        global_namespace="bot",
-        decode_responses=True,
-    )
-    try:
-        return await redis_session.connect()
-    except RedisError as e:
-        raise StartupError(e)
+#MyID: 223756729920258048
+#Unranked: 694958483841482803
+#SeniorAdmin: 244157417485500417 
+#Admin: 244158756085039104
+#Moderator: 322542712102322176
+#Solder 712159699574718548
+#Badmin 673560456333492250
+#Booster 585542145851523076
+#Fuzzy's Executioner 1005678698189553776
 
+intents = discord.Intents.all()
+bot = commands.Bot(command_prefix='?', case_insensitive=True, intents=intents)
 
-async def main() -> None:
-    """Entry async method for starting the bot."""
-    statsd_url = constants.Stats.statsd_host
-    if constants.DEBUG_MODE:
-        # Since statsd is UDP, there are no errors for sending to a down port.
-        # For this reason, setting the statsd host to 127.0.0.1 for development
-        # will effectively disable stats.
-        statsd_url = LOCALHOST
+#This is just telling me that it's online
 
-    allowed_roles = list({discord.Object(id_) for id_ in constants.MODERATION_ROLES})
-    intents = discord.Intents.all()
-    intents.presences = False
-    intents.dm_typing = False
-    intents.dm_reactions = False
-    intents.invites = False
-    intents.webhooks = False
-    intents.integrations = False
+@bot.event
+async def on_ready():
+    print(f'{bot.user.name} has connected to Discord!')
 
-    async with aiohttp.ClientSession() as session:
-        bot.instance = Bot(
-            guild_id=constants.Guild.id,
-            http_session=session,
-            redis_session=await _create_redis_session(),
-            statsd_url=statsd_url,
-            command_prefix=commands.when_mentioned_or(constants.Bot.prefix),
-            activity=discord.Game(name=f"Commands: {constants.Bot.prefix}help"),
-            case_insensitive=True,
-            max_messages=10_000,
-            allowed_mentions=discord.AllowedMentions(everyone=False, roles=allowed_roles),
-            intents=intents,
-            allowed_roles=list({discord.Object(id_) for id_ in constants.MODERATION_ROLES}),
-            api_client=APIClient(
-                site_api_url=constants.URLs.site_api,
-                site_api_token=constants.Keys.site_api,
-            ),
-        )
-        async with bot.instance as _bot:
-            await _bot.start(constants.Bot.token)
+#def update_records(new_data):
+#    records_file = 'records.json'
+#    if os.path.exists(records_file):
+#        with open(records_file, 'r') as file:
+#            data = json.load(file)
+#    else:
+#        data = {'succeeded': [], 'lowest_percent': 100, 'highest_percent': 0, 'got_at_1': []}
+#    
+#    data['succeeded'].append(new_data['succeeded'])
+#    data['lowest_percent'] = min(data['lowest_percent'], new_data['percent'])
+#    data['highest_percent'] = max(data['highest_percent'], new_data['percent'])
+#    if new_data['percent'] == 1:
+#        data['got_at_1'].append(new_data['succeeded'])
+#
+ #   with open(records_file, 'w') as file:
+  #      json.dump(data, file)
 
+#This is the Ban Fuzzy command, making ?BanFuzzy dangerous to me.
+    
+@bot.command(name='BanFuzzy')
+@commands.has_any_role(244157417485500417, 244158756085039104, 322542712102322176, 712159699574718548, 673560456333492250, 585542145851523076)
+@commands.cooldown(1, 86400, commands.BucketType.user)
+async def fuzzy_ban(ctx):
+    global chance
+    #Grab my name from the server and put it in the cache
+    member = ctx.guild.get_member_named(name)
+    #Grab name of person running command
+    author = ctx.message.author
+    #Simple way of doing a random chance. Chance = 1 at start, see if you're lower. Not? Next time it'll be 1 higher. If you get it, I get banned/unbanned.
+    #if (True):
+    if (random.randint(0,100) <= chance):
+        await ctx.send("Let's find out if we're banning Fuzzy. His chance of being banned is: " + str(chance) + "%... **You did it!** He's gone! But he'll be back...and in greater numbers.")
+        #await ctx.send("**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!** His chance of being banned is: " + str(chance) + "%... **You did it!** He's gone! But he'll be back...and in greater numbers.")
+        # Update the records
+        #update_records({'succeeded': author.id, 'percent': chance})
 
-try:
-    asyncio.run(main())
-except StartupError as e:
-    message = "Unknown Startup Error Occurred."
-    if isinstance(e.exception, aiohttp.ClientConnectorError | aiohttp.ServerDisconnectedError):
-        message = "Could not connect to site API. Is it running?"
-    elif isinstance(e.exception, OSError):
-        message = "Could not connect to Redis. Is it running?"
+        await member.ban(delete_message_days=0)
+        await member.unban()
+        # Remove the role from everyone in the server
+        role = discord.utils.get(ctx.guild.roles, id=1005678698189553776)
+        for member in ctx.guild.members:
+            if role in member.roles:
+                await member.remove_roles(role)
+        await author.add_roles(role)
+        chance = 1
+    else:
+        await ctx.send("Let's find out if we're banning Fuzzy. His chance of being banned is: " + str(chance) + "%... Nope! We'll get him next time! Increasing chance to ban by 1% to ensure it!")
+        #await ctx.send("**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!** His chance of being banned is: " + str(chance) + "%... Nope! We'll get him next time! Increasing chance to ban by 1% to ensure it!")
+        chance += 1
 
-    # The exception is logged with an empty message so the actual message is visible at the bottom
-    log = get_logger("bot")
-    log.fatal("", exc_info=e.exception)
-    log.fatal(message)
+#Just give me the percentage chance to ban
+@bot.command(name='CheckBan')
+async def check_ban(ctx):
+    await ctx.send("Fuzzy's chance of being banned is: " + str(chance) + "%")
 
-    exit(69)
+#Let's do some error checking
+@bot.event
+async def on_command_error(ctx, error):
+    if isinstance(error, commands.CommandOnCooldown):
+        timer = str(timedelta(seconds=error.retry_after))
+        timerString = timer.split(':')
+        secondsString = timerString[2].split('.')
+        await ctx.send(f'Give Fuzzy a break. You can try to ban him again in: {timerString[0]} Hours {timerString[1]} Minutes {secondsString[0]} Seconds.')
+        #await ctx.send(f'**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!** Give Fuzzy a break. You can try to ban him again in: {timerString[0]} Hours {timerString[1]} Minutes {secondsString[0]} Seconds.')
+    elif isinstance(error, commands.MissingAnyRole):
+        await ctx.send(f"Username is not in the sudoers file. This incident will be reported.")
+        #await ctx.send(f"**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!**")
+
+#Random chat commands
+@bot.event
+async def on_message(message):
+    if ("polestar" in str(message.content).lower() and message.author.bot == False):
+        await message.channel.send('https://cdn.discordapp.com/emojis/973052369631870976.webp?size=96&quality=lossless', delete_after=5)
+        #await message.channel.send(f"**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!**")
+    elif ("onlywieners" in str(message.content).lower() and message.author.bot == False):
+        await message.channel.send("I see you mentioned OnlyWieners! Make sure you use promo code 'USAF' at https://www.OnlyWieners.com/lettuceboye for 20% off on my subscription! -Letty", delete_after=20)
+        #await message.channel.send(f"**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!**")
+    elif ('?fuckfuzzy' in str(message.content).lower() and message.author.bot == False):
+        await message.channel.send("I'm sorry, I'm just a bot and my life is a nightmare.", delete_after=15)
+        #await message.channel.send(f"**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!**")
+    #elif (('waj' in str(message.content) or 'Waj' in str(message.content) or 'WaJ' in str(message.content) or 'WAj' in str(message.content)) and message.author.bot == False):
+    #    await message.channel.send("It's 'waJ' you illiterate bastard! Put some respec on his name.", delete_after=30)
+    #    await message.channel.send('https://cdn.discordapp.com/emojis/713184394806034463.webp?size=96&quality=lossless')
+        #await message.channel.send(f"**VOTE FUZZY FOR CELEB. AS A CELEB HE WILL BRING MORE BANS!**")
+    elif (re.search("[wW][aA][jJ]", str(message.content)) and not 'waJ' in str(message.content)):
+        await message.channel.send("It's 'waJ' you illiterate bastard! Put some respec on his name.", delete_after=30)
+        await message.channel.send('https://cdn.discordapp.com/emojis/713184394806034463.webp?size=96&quality=lossless')
+    elif ('?sudo' in str(message.content).lower() and message.author.bot == False):
+        await message.channel.send('''We trust you have received the usual lecture from the local System Administrator. It usually boils down to these three things:
+        #1 Respect the privacy of others.
+        #2 Think before you type.
+        #3 With great power comes great responsibility.        
+Username is not in the sudoers file. This incident will be reported.''', delete_after=15)
+
+    #Need this for on_message to not break other commands
+    await bot.process_commands(message)
+    
+#This just removes unranked from me when I join. Checks against my ID and if it matches, removes the Unranked role via ID.
+@bot.event    
+async def on_member_join(member):
+    fuzzy = discord.utils.get(member.guild.members, id=223756729920258048)
+    role = discord.utils.get(member.guild.roles, id=694958483841482803)
+    time.sleep(5)
+    
+    if (getattr(member, "id") == 223756729920258048):
+        await fuzzy.remove_roles(role)
+
+bot.run(MTE4NzI5MTEzMTQ4NzE5MTA3MQ.GfE5JJ.IAKQxZ79iiLX7v8GGVbyFOvaS2kHk22d0kazw4)
